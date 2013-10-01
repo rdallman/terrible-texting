@@ -5,6 +5,42 @@
 
 char* readFile(char* n);
 
+typedef struct Node {
+  struct Node* next;
+  char c;
+} Node;
+
+typedef struct List {
+  Node* head;
+
+  Node* (*popAtAndPush) (struct List* l, int pos);
+  void (*insert) (struct List* l, char c);
+} List;
+
+Node* popAtAndPush(List* l, int pos) {
+  int i = 0;
+  Node* pn = l->head;
+  Node* n = pn;
+  while (i++ < pos) {
+    /*printf("%c", n->c);*/
+    pn = n;
+    n = n->next;
+  }
+  /*printf("%c", n->c);*/
+  pn->next = n->next;
+  n->next = l->head;
+  l->head = n;
+  return n;
+}
+
+void insert(List* l, char c) {
+  Node* n = malloc(sizeof(Node));
+  n->c = c;
+  n->next = l->head;
+  l->head = n;
+  /*printf("\nhead:%c", l->head->c);*/
+}
+
 int main(int argc, char *argv[]) {
   if (argc != 2) {
     fprintf(stderr, "Usage: %s file.txt", argv[0]);
@@ -17,25 +53,35 @@ int main(int argc, char *argv[]) {
   char* dmsg;
   dmsg = malloc(sizeof(emsg));
 
-  char* list;
-  list = malloc(50 * sizeof(char));
+  List list;
+  list.head = NULL;
+  list.popAtAndPush = &popAtAndPush;
+  list.insert = &insert;
 
-  size_t n, m, l;
-  n=m=l=0;
-  int c;
+  size_t n = 0;
+  size_t m = 0;
+  size_t l = 0;
+
   while (emsg[n]) {
-    c = emsg[n++];
-    printf("%d", c);
-    if (isdigit(c)) {
-      dmsg[m++] = list[l-c];
+    if (isdigit(emsg[n])) {
+      char* num;
+      num = malloc(1024);
+      size_t z = 0;
+      while(isdigit(emsg[n])) {
+        num[z++] = emsg[n++];
+      }
+      dmsg[m++] = list.popAtAndPush(&list, atoi(num))->c;
+      printf("%c", dmsg[m-1]);
     } else {
-      dmsg[m++] = c;
-      list[l++] = c;
+      /*printf("%c", emsg[n]);*/
+      dmsg[m++] = emsg[n];
+      list.insert(&list, emsg[n++]);
+      /*printf("%c", emsg[n]);*/
     }
     n++;
   }
   dmsg[m] = '\0';
-  printf("%s", dmsg);
+  /*printf("%s", dmsg);*/
 }
 
 char* readFile(char* name) {
@@ -55,5 +101,6 @@ char* readFile(char* name) {
     msg[n++] = (char) c;
   }
   msg[n] = '\0';
+
   return msg;
 }
